@@ -14,3 +14,11 @@ The implementation is purely based on the ECMA's specifications.
   });
 </script>
 ```
+
+## Remaining work
+
+### Implement
+- Promise.all
+- Promise.race
+- Promise.reject
+- Promise.resolve
