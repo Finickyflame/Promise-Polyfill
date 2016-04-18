@@ -1,6 +1,58 @@
 ﻿(function (global, undefined) {
     "use strict"
 
+    if ("function" !== typeof Object.create) {
+        /**
+         * The Object.create() method creates a new object with the specified prototype object and properties.
+         * @function Object.create
+         * @param proto
+         * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/create}
+         */
+        Object.create = (function () {
+            var f = function () { };
+            return function (proto) {
+                if (arguments.length > 1) {
+                    throw Error('Second argument not supported');
+                }
+                if (proto !== Object(proto) && proto !== null) {
+                    throw TypeError('Argument must be an object or null');
+                }
+                if (proto === null) {
+                    throw Error('null [[Prototype]] not supported');
+                }
+                f.prototype = proto;
+                var result = new f();
+                f.prototype = null;
+                return result;
+            };
+        })();
+    }
+    if ("function" !== typeof Function.prototype.bind) {
+        /**
+         * The bind() method creates a new function that, when called, has its this keyword set to the provided value, with a given sequence of arguments preceding any provided when the new function is called.
+         * @function Function.prototype.bind
+         * @param {} thisArg - The value to be passed as the this parameter to the target function when the bound function is called. The value is ignored if the bound function is constructed using the new operator.
+         * @returns {} 
+         * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind}
+         */
+        Function.prototype.bind = function (thisArg) {
+            if ("function" !== typeof this) {
+                throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable');
+            }
+            var s = this;
+            var args = Array.prototype.slice.call(arguments, 1);
+            var f = function () { };
+            var bound = function() {
+                s.apply(this instanceof f ? this : thisArg, args.concat(Array.prototype.slice.call(arguments)));
+            };
+            if (this.prototype) {
+                f.prototype = this.prototype;
+            }
+            bound.prototype = new f();
+            return bound;
+        };
+    }
+
     if ("undefined" !== typeof global.Promise && !global.debugPromise) {
         return;
     }
@@ -252,7 +304,7 @@
                 };
 
                 var onMessage = function (event) {
-                    if (event.source === window &&
+                    if (event.source == window &&
                         typeof event.data === "string" &&
                         event.data.indexOf(messagePrefix) === 0) {
                         var handle = (+event.data.slice(messagePrefix.length));
@@ -329,7 +381,6 @@
         })();
 
         var jobHandler = jobFactory.createJobHandler();
-
 
         /**
          * @static
@@ -745,21 +796,28 @@
         };
 
         /**
+         * The reject function returns a new promise rejected with the passed argument.
          * @static
          * @function Promise.reject
-         * @param {} reason
+         * @param {any} reason
+         * @returns {Promise}
+         * @see {@link http://www.ecma-international.org/ecma-262/6.0/#sec-promise.reject}
          */
         Promise.reject = function (reason) {
-            throw new Error("Not Implemented");
+            var c = this;
+            var promiseCapability = newPromiseCapability(c);
+            var rejectResult = promiseCapability._reject.call(undefined, r);
+            return promiseCapability._promise;
         };
 
-        
+
         /**
          * The resolve function returns either a new promise resolved with the passed argument, or the argument itself if the argument is a promise produced by this constructor.
          * @static
          * @function Promise.resolve
          * @param {Promise} x 
          * @returns {Promise} 
+         * @see {@link http://www.ecma-international.org/ecma-262/6.0/#sec-promise.resolve}
          */
         Promise.resolve = function (x) {
             var c = this;
@@ -769,7 +827,7 @@
                     return x;
             }
             var promiseCapability = newPromiseCapability(c);
-            var resolveResult = promiseCapability._resolve(x);
+            var resolveResult = promiseCapability._resolve.call(undefined, x);
             return promiseCapability._promise;
         };
 
