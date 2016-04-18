@@ -1,11 +1,11 @@
-(function (window, undefined) {
+ï»¿(function (global, undefined) {
     "use strict"
 
-    if ("undefined" !== typeof window.Promise) {
+    if ("undefined" !== typeof global.Promise && !global.debugPromise) {
         return;
     }
 
-    window.Promise = (function () {
+    var Promise = (function () {
         /**
          * @enum enuPromiseState
          */
@@ -84,6 +84,53 @@
             this._reject = reject;
         }
 
+        var Iterator = (function () {
+            /**
+             * @class Iterator
+             * @param {any[]} iterable 
+             */
+            function Iterator(iterable) {
+                this._index = undefined;
+                if (!iterable || "undefined" === typeof iterable.length)
+                    throw new TypeError("Invalid iterable");
+                this.length = (this._iterable = iterable).length;
+            }
+
+            /**
+             * @function Iterator.prototype.next
+             * @param {any} [value] 
+             * @returns {boolean} - the iterator has successfully advanced to the next element; false if the iterator has passed the end of the collection. 
+             */
+            Iterator.prototype.next = function (value) {
+                this._index = "undefined" !== typeof this._index ? this._index + 1 : 0;
+                return this._index < this.length;
+            };
+
+            /**
+             * @function Iterator.prototype.getCurrent
+             * @returns {any} 
+             */
+            Iterator.prototype.getCurrent = function () {
+                return this._iterable[this._index];
+            };
+
+            /**
+             * @function Iterator.prototype.reset
+             */
+            Iterator.prototype.reset = function () {
+                this._index = 0;
+            };
+            return Iterator;
+        })();
+
+        /**
+         * @class IteratorRecord
+         * @param {Iterator} iterator 
+         */
+        function IteratorRecord(iterator) {
+            this._iterator = iterator;
+            this._done = false;
+        }
 
         var JobHandler = (function (undefined) {
 
@@ -204,11 +251,11 @@
                     delete tasks[handle];
                 };
 
-                function onMessage(event) {
+                var onMessage = function (event) {
                     if (event.source === window &&
                         typeof event.data === "string" &&
                         event.data.indexOf(messagePrefix) === 0) {
-                        handle = (+event.data.slice(messagePrefix.length));
+                        var handle = (+event.data.slice(messagePrefix.length));
 
                         var task = tasks[handle];
                         if (task) {
@@ -219,7 +266,7 @@
                             }
                         }
                     }
-                }
+                };
 
                 if (window.addEventListener) {
                     window.addEventListener("message", onMessage, false);
@@ -312,14 +359,43 @@
         }
 
         /**
-         * The abstract operation PerformPromiseThen performs the “then” operation on promise using onFulfilled and onRejected as its settlement actions
+         * 
+         * @param {IteratorRecord} iteratorRecord 
+         * @param {function} constructor 
+         * @param {PromiseCapability} resultCapability 
+         * @returns {} 
+         * @see {@link http://www.ecma-international.org/ecma-262/6.0/#sec-performpromiseall}
+         */
+        function performPromiseAll(iteratorRecord, constructor, resultCapability) {
+            var values = [];
+            var remainingElementCount = { _value: 1 };
+            var index = 0;
+            while (iteratorRecord._iterator.next()) {
+                var nextValue = iteratorRecord._iterator.getCurrent();
+                values.push(undefined);
+                var nextPromise = constructor.resolve(nextValue);
+                var resolveElement = createAllResolveFunction({ _value: false }, index, values, resultCapability, remainingElementCount);
+                remainingElementCount._value = remainingElementCount._value + 1;
+                var result = nextPromise.then(resolveElement, resultCapability._reject);
+                index = index + 1;
+            }
+            iteratorRecord._done = true;
+            remainingElementCount._value = remainingElementCount._value - 1;
+            if (remainingElementCount._value === 0) {
+                resultCapability._resolve.call(undefined, values);
+            }
+            return resultCapability._promise;
+        }
+
+        /**
+         * The abstract operation PerformPromiseThen performs the â€œthenâ€ operation on promise using onFulfilled and onRejected as its settlement actions
          * @static
          * @function performPromiseThen
          * @param {} promise 
          * @param {} onFulfilled 
          * @param {} onRejected 
          * @param {} resultCapability 
-         * @returns {object} resultCapability’s promise 
+         * @returns {object} resultCapabilityâ€™s promise 
          * @see {@link http://www.ecma-international.org/ecma-262/6.0/#sec-performpromisethen}
          */
         function performPromiseThen(promise, onFulfilled, onRejected, resultCapability) {
@@ -458,10 +534,40 @@
 
         /**
          * @static
+         * @function createAllResolveFunction
+         * @returns {function} - Promise.all resolve Function 
+         * @see {@link http://www.ecma-international.org/ecma-262/6.0/#sec-promise.all-resolve-element-functions}
+         */
+        function createAllResolveFunction(alreadyCalled, index, values, capabilities, remainingElements) {
+            var f = function (x) {
+                var alreadyCalled = f._alreadyCalled;
+                if (alreadyCalled._value)
+                    return undefined;
+                alreadyCalled._value = true;
+                var index = f._index;
+                var values = f._values;
+                var promiseCapability = f._capabilities;
+                var remainingElementsCount = f._remainingElements;
+                values[index] = x;
+                remainingElementsCount._value = remainingElementsCount._value - 1;
+                if (remainingElementsCount._value == 0)
+                    return promiseCapability._resolve(values);
+                return undefined;
+            };
+            f._alreadyCalled = alreadyCalled;
+            f._index = index;
+            f._values = values;
+            f._capabilities = capabilities;
+            f._remainingElements = remainingElements;
+            return f;
+        }
+
+        /**
+         * @static
          * @function createResolveFunction
          * @param {Promise} promise 
          * @param {object} alreadyResolved 
-         * @returns {function} resolveFunction 
+         * @returns {function} - resolveFunction 
          * @see {@link http://www.ecma-international.org/ecma-262/6.0/#sec-promise-resolve-functions}
          */
         function createResolveFunction(promise, alreadyResolved) {
@@ -477,12 +583,14 @@
                 if ("object" !== typeof resolution) {
                     return fulfillPromise(promise, resolution);
                 }
-                var then = resolution.then;
-                if ("undefined" === typeof then) {
+                var then;
+                try {
+                    then = resolution.then;
+                } catch (ex) {
                     return rejectPromise(promise, then);
                 }
                 if (!isCallable(then)) { //then._value?
-                    return fulfillPromise(promise, then);
+                    return fulfillPromise(promise, resolution);
                 }
                 jobHandler.enqueue("PromiseJobs", promiseResolveThenableJob, [promise, resolution, then]);
                 return undefined;
@@ -527,6 +635,26 @@
             var resolve = createResolveFunction(promise, alreadyResolved);
             var reject = createRejectFunction(promise, alreadyResolved);
             return { _resolve: resolve, _reject: reject };
+        }
+
+        /**
+         * @static
+         * @function ifAbruptRejectPromise
+         * @param {function} value 
+         * @param {PromiseCapability} capability 
+         * @returns {} 
+         */
+        function ifAbruptRejectPromise(value, capability) {
+            try {
+                value();
+            } catch (ex) {
+                try {
+                    var rejectResult = capability._reject.call(undefined, ex);
+                    return rejectResult;
+                } catch (ex2) {
+                    return capability._promise;
+                }
+            }
         }
 
 
@@ -582,9 +710,27 @@
          * @static
          * @function Promise.all
          * @param {function[]} iterable
+         * @see {@link http://www.ecma-international.org/ecma-262/6.0/#sec-promise.all}
          */
         Promise.all = function (iterable) {
-            throw new Error("Not Implemented");
+            var c = this;
+            var result;
+            var iterator;
+            var abruptResult;
+
+            var promiseCapability = newPromiseCapability(c);
+            if (abruptResult = ifAbruptRejectPromise(function () {
+                iterator = new Iterator(iterable);
+            }, promiseCapability)) {
+                return abruptResult;
+            }
+            var iteratorRecord = new IteratorRecord(iterator);
+            if (abruptResult = ifAbruptRejectPromise(function () {
+                result = performPromiseAll(iteratorRecord, c, promiseCapability);
+            }, promiseCapability)) {
+                return abruptResult;
+            }
+            return result;
         };
 
         /**
@@ -607,17 +753,31 @@
             throw new Error("Not Implemented");
         };
 
+        
         /**
-         * 
-         * @function Promise.resolve
+         * The resolve function returns either a new promise resolved with the passed argument, or the argument itself if the argument is a promise produced by this constructor.
          * @static
-         * @param {}
+         * @function Promise.resolve
+         * @param {Promise} x 
+         * @returns {Promise} 
          */
-        Promise.resolve = function () {
-            throw new Error("Not Implemented");
+        Promise.resolve = function (x) {
+            var c = this;
+            if (isPromise(x)) {
+                var xConstructor = x.constructor;
+                if (c === xConstructor)
+                    return x;
+            }
+            var promiseCapability = newPromiseCapability(c);
+            var resolveResult = promiseCapability._resolve(x);
+            return promiseCapability._promise;
         };
 
         return Promise;
     })();
 
+    if (global.debugPromise)
+        global.PromisePolyfill = Promise;
+    if ("undefined" === typeof global.Promise)
+        global.Promise = Promise;
 })(window);

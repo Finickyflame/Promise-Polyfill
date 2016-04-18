@@ -1,0 +1,94 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Promise - Unit Testing - Promise.all</title>
+    <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-1.23.1.css">
+</head>
+<body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <script>
+        window.debugPromise = true;
+    </script>
+    <script src="https://code.jquery.com/qunit/qunit-1.23.1.js"></script>
+    <script src="../promise.js"></script>
+    <script>
+        /*QUnit.test("a Promise-returning test", function (assert) {
+            assert.expect(0);
+
+            var thenable = new CustomPromise(function (resolve, reject) {
+                setTimeout(function () {
+                    resolve("result");
+                }, 500);
+            });
+            return thenable;
+        });
+        QUnit.test("a Promise-returning test", function (assert) {
+            assert.expect(0);
+
+            var thenable = new Promise(function (resolve, reject) {
+                setTimeout(function () {
+                    resolve("result");
+                }, 500);
+            });
+            return thenable;
+        });*/
+        QUnit.test("Empty list", function (assert) {
+            var itererable = [];
+            var promise = PromisePolyfill.all(itererable);
+            assert.ok(promise);
+            assert.equal(promise._promiseState, "fulfilled");
+            assert.deepEqual(promise._promiseResult, itererable);
+        });
+        QUnit.test("Non-Empty list", function (assert) {
+            var itererable = [1];
+            var promise = PromisePolyfill.all(itererable);
+            assert.equal(promise._promiseState, "pending");
+            setTimeout(function () {
+                assert.ok(promise);
+                assert.equal(promise._promiseState, "fulfilled");
+                assert.deepEqual(promise._promiseResult, itererable);
+            });
+        });
+        QUnit.test("Resolve all - Simple", function (assert) {
+            var itererable = [
+                new PromisePolyfill(function (resolve, reject) {
+                    resolve(1);
+                }),
+                new PromisePolyfill(function (resolve, reject) {
+                    resolve(2);
+                })
+            ];
+            var promise = PromisePolyfill.all(itererable);
+            assert.equal(promise._promiseState, "pending");
+            promise.then(function(a) {
+                assert.equal(promise._promiseState, "fulfilled");
+                assert.deepEqual(promise._promiseResult, [1, 2]);
+                assert.deepEqual(a, [1, 2]);
+            });
+            return promise;
+        });
+        QUnit.test("Reject second - simple", function (assert) {
+            var done = assert.async();
+            var itererable = [
+                new PromisePolyfill(function (resolve, reject) {
+                    resolve(1);
+                }),
+                new PromisePolyfill(function (resolve, reject) {
+                    reject(2);
+                })
+            ];
+            var promise = PromisePolyfill.all(itererable);
+            assert.equal(promise._promiseState, "pending");
+            promise.catch(function(a) {
+                assert.equal(promise._promiseState, "rejected");
+                assert.equal(promise._promiseResult, 2);
+                assert.equal(a, 2);
+                done();
+            });
+        });
+    </script>
+</body>
+</html>
