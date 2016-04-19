@@ -44,10 +44,10 @@
 
             var itererable = [
                 new PromisePolyfill(function (resolve, reject) {
-                    setTimeout(resolve, 500, 1);
+                    setTimeout(resolve.bind(null, 1), 500);
                 }),
                 new PromisePolyfill(function (resolve, reject) {
-                    setTimeout(resolve, 100, 2);
+                    setTimeout(resolve.bind(null, 2), 100);
                 })
             ];
             var promise = PromisePolyfill.race(itererable);
@@ -62,10 +62,10 @@
 
             var itererable = [
                 new PromisePolyfill(function (resolve, reject) {
-                    setTimeout(reject, 500, 1);
+                    setTimeout(reject.bind(null, 1), 500);
                 }),
                 new PromisePolyfill(function (resolve, reject) {
-                    setTimeout(resolve, 100, 2);
+                    setTimeout(resolve.bind(null, 2), 100);
                 })
             ];
             var promise = PromisePolyfill.race(itererable);
@@ -73,7 +73,7 @@
                 assert.equal(promise._promiseState, "fulfilled");
                 assert.equal(value, 2);
                 done();
-            }).catch(function(ex) {
+            })["catch"](function(ex) {
                 // should not reach this
                 assert.notOk(ex);
                 done();
@@ -84,10 +84,10 @@
 
             var itererable = [
                 new PromisePolyfill(function (resolve, reject) {
-                    setTimeout(resolve, 500, 1);
+                    setTimeout(resolve.bind(null, 1), 500);
                 }),
                 new PromisePolyfill(function (resolve, reject) {
-                    setTimeout(reject, 100, 2);
+                    setTimeout(reject.bind(null, 2), 100);
                 })
             ];
             var promise = PromisePolyfill.race(itererable);
@@ -95,7 +95,7 @@
                 // should not reach this
                 assert.notOk(value);
                 done();
-            }).catch(function (ex) {
+            })["catch"](function (ex) {
                 assert.equal(promise._promiseState, "rejected");
                 assert.equal(ex, 2);
                 done();
