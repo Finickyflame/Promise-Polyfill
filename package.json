@@ -1,7 +1,7 @@
 {
   "name": "Promise-Polyfill",
   "version": "0.0.2",
-  "description": "Add the functionnalities to support Promises in older browsers.",
+  "description": "Add the functionalities to support Promises in older browsers.",
   "main": "dist/promise.js",
   "files": [
     "LICENSE",
