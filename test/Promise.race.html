@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Promise - Unit Testing - Promise.race</title>
+    <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-1.23.1.css">
+</head>
+<body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <script>
+        window.debugPromise = true;
+    </script>
+    <script src="https://code.jquery.com/qunit/qunit-1.23.1.js"></script>
+    <script src="../promise.js"></script>
+    <script>
+        QUnit.test("Empty list", function (assert) {
+            var done = assert.async();
+
+            var itererable = [];
+            var promise = PromisePolyfill.race(itererable);
+            promise.then(function (value) {
+                assert.notOk(true);
+            });
+            setTimeout(function () {
+                assert.equal(promise._promiseState, "pending");
+                done();
+            }, 1000);
+        });
+        QUnit.test("Non-Empty list", function (assert) {
+            var done = assert.async();
+
+            var itererable = [1];
+            var promise = PromisePolyfill.race(itererable);
+            promise.then(function (value) {
+                assert.ok(promise);
+                assert.equal(promise._promiseState, "fulfilled");
+                assert.equal(value, 1);
+                done();
+            });
+        });
+        QUnit.test("Race - Simple", function (assert) {
+            var done = assert.async();
+
+            var itererable = [
+                new PromisePolyfill(function (resolve, reject) {
+                    setTimeout(resolve, 500, 1);
+                }),
+                new PromisePolyfill(function (resolve, reject) {
+                    setTimeout(resolve, 100, 2);
+                })
+            ];
+            var promise = PromisePolyfill.race(itererable);
+            promise.then(function (value) {
+                assert.equal(promise._promiseState, "fulfilled");
+                assert.equal(value, 2);
+                done();
+            });
+        });
+        QUnit.test("Race - resolve faster", function (assert) {
+            var done = assert.async();
+
+            var itererable = [
+                new PromisePolyfill(function (resolve, reject) {
+                    setTimeout(reject, 500, 1);
+                }),
+                new PromisePolyfill(function (resolve, reject) {
+                    setTimeout(resolve, 100, 2);
+                })
+            ];
+            var promise = PromisePolyfill.race(itererable);
+            promise.then(function(value) {
+                assert.equal(promise._promiseState, "fulfilled");
+                assert.equal(value, 2);
+                done();
+            }).catch(function(ex) {
+                // should not reach this
+                assert.notOk(ex);
+                done();
+            });
+        });
+        QUnit.test("Race - reject faster", function (assert) {
+            var done = assert.async();
+
+            var itererable = [
+                new PromisePolyfill(function (resolve, reject) {
+                    setTimeout(resolve, 500, 1);
+                }),
+                new PromisePolyfill(function (resolve, reject) {
+                    setTimeout(reject, 100, 2);
+                })
+            ];
+            var promise = PromisePolyfill.race(itererable);
+            promise.then(function (value) {
+                // should not reach this
+                assert.notOk(value);
+                done();
+            }).catch(function (ex) {
+                assert.equal(promise._promiseState, "rejected");
+                assert.equal(ex, 2);
+                done();
+            });
+        });
+    </script>
+</body>
+</html>
