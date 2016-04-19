@@ -12,11 +12,11 @@ gulp.task('patch',   function() { return updateVersion('patch'); });
 gulp.task('feature', function() { return updateVersion('minor'); });
 gulp.task('release', function() { return updateVersion('major'); });
 
+/*
 gulp.task('test', function () {
   return gulp.src('test/spec.js')
              .pipe(mocha());
 });
-/*
 gulp.task('coverage', function () {
   return gulp.src('test/spec.js')
              .pipe(mocha({
@@ -36,5 +36,5 @@ gulp.task('js', function () {
       .pipe(gulp.dest('./dist'));
 });
 
-gulp.task('ci', ['js', 'test']);
+gulp.task('ci', ['js']);
 gulp.task('default', ['js']);
