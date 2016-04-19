@@ -1,0 +1,53 @@
+{
+  "name": "Promise-Polyfill",
+  "version": "0.0.2",
+  "description": "Add the functionnalities to support Promises in older browsers.",
+  "main": "dist/promise.js",
+  "files": [
+    "LICENSE",
+    "README.md",
+    "promise.js",
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com/Finickyflame/Promise-Polyfill.git"
+  },
+  "keywords": [
+    "promise",
+    "polyfill",
+    "javascript"
+  ],
+  "author": "Nicholas Berube",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Finickyflame/Promise-Polyfill/issues"
+  },
+  "homepage": "https://github.com/Finickyflame/Promise-Polyfill",
+  "registry": "npm",
+  "format": "global",
+  "devDependencies": {
+    "blanket": "^1.1.7",
+    "chai": "^3.4.0",
+    "coveralls": "^2.11.4",
+    "gulp": "^3.9.0",
+    "gulp-bump": "^1.0.0",
+    "gulp-load-plugins": "^1.0.0",
+    "gulp-mocha": "^2.1.3",
+    "gulp-rename": "^1.2.2",
+    "gulp-replace": "^0.5.4",
+    "gulp-uglify": "^1.4.2",
+    "mocha": "^2.3.3",
+    "mocha-lcov-reporter": "^1.0.0"
+  },
+  "config": {
+    "blanket": {
+      "pattern": [
+        "promise.js"
+      ],
+      "data-cover-never": [
+        "node_modules"
+      ]
+    }
+  }
+}
