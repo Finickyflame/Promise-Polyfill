@@ -158,8 +158,7 @@
                  * @param {function} action
                  * @param {any[]} [args]
                  */
-                function Job(name, action, args, id) {
-                    this.id = id;
+                function Job(name, action, args) {
                     this.name = name;
                     this.action = action;
                     this.args = args;
@@ -245,7 +244,7 @@
                     var nextHandle = 1;
                     var tasks = {};
                     var messagePrefix = "setImmediate$" + Math.random() + "$";
-                    
+
                     run = function (handler) {
                         var args = Array.prototype.slice.call(arguments, 1);
                         tasks[nextHandle] = function () {
