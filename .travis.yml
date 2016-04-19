@@ -1,6 +1,5 @@
 language: node_js
-
-before_install:
+before_script:
   - npm install -g gulp
-
-script: gulp ci
+script: gulp
+skip_cleanup: true
