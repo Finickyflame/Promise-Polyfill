@@ -42,7 +42,7 @@
             var s = this;
             var args = Array.prototype.slice.call(arguments, 1);
             var f = function () { };
-            var bound = function() {
+            var bound = function () {
                 s.apply(this instanceof f ? this : thisArg, args.concat(Array.prototype.slice.call(arguments)));
             };
             if (this.prototype) {
@@ -174,9 +174,10 @@
                  */
                 function JobHandler(run, clear, buffer) {
                     if ("undefined" === buffer)
-                        buffer = 100;
+                        buffer = 20;
                     this._run = run;
                     this._clear = clear;
+                    this._buffer = buffer;
                     this._queue = new Array(buffer);
                     this._queueIds = new Array(buffer);
                     this._length = 0;
@@ -198,28 +199,24 @@
                     if (null != typeof args && ("object" !== typeof args || "undefined" === typeof args.length))
                         throw new TypeError("Unexpected args value. Expected type: Array, null or undefined");
 
-                    this._queue[this._length] = new Job(name, action, args);
-                    this._queueIds[this._length++] = this._run(this._process.bind(this), 0);
+                    var id = this._length;
+                    this._length = this._length + 1;
+                    this._queue[id] = new Job(name, action, args);
+                    this._queueIds[id] = this._run(this._process.bind(this), 0);
                 };
 
                 JobHandler.prototype._process = function () {
-                    for (var i = 0; i < this._length; i++) {
-                        this._execute(i);
-                        this._remove(i);
-                    }
+                    var queue = this._queue;
+                    var queueIds = this._queueIds;
+                    var length = this._length;
+                    this._queue = new Array(this._buffer);
+                    this._queueIds = new Array(this._buffer);
                     this._length = 0;
+                    for (var i = 0; i < length; i++) {
+                        queue[i].execute();
+                        this._clear(queueIds[i]);
+                    }
                 };
-
-                JobHandler.prototype._execute = function (index) {
-                    this._queue[index].execute();
-                };
-
-                JobHandler.prototype._remove = function (index) {
-                    this._clear(this._queueIds[index]);
-                    this._queue[index] = undefined;
-                    this._queueIds[index] = undefined;
-                };
-
 
                 return JobHandler;
             })();
@@ -247,7 +244,6 @@
                     var nextHandle = 1;
                     var tasks = {};
                     var messagePrefix = "setImmediate$" + Math.random() + "$";
-
 
                     run = function (handler) {
                         var args = Array.prototype.slice.call(arguments, 1);
@@ -334,6 +330,7 @@
                 for (var i = 0; i < length; i++) {
                     var handler = new this._handlers[i]();
                     if (handler.isSupported()) {
+                        console.log("using jobhandler " + i);
                         return handler;
                     }
                 }
@@ -437,7 +434,7 @@
             f._alreadyResolved = alreadyResolved;
             return f;
         }
-        
+
         /**
          * @static
          * @function createResolvingFunctions
@@ -709,7 +706,7 @@
             }
             return undefined;
         }
-        
+
         /**
          * The Promise object is used for deferred and asynchronous computations. 
          * A Promise represents an operation that hasn't completed yet, but is expected in the future.
@@ -829,7 +826,7 @@
             var rejectResult = promiseCapability._reject.call(undefined, r);
             return promiseCapability._promise;
         };
-        
+
         /**
          * The resolve function returns either a new promise resolved with the passed argument, or the argument itself if the argument is a promise produced by this constructor.
          * @static
