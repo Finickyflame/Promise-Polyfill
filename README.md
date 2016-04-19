@@ -22,7 +22,7 @@ The implementation is purely based on the [ECMA's specifications](http://www.ecm
 - [x] [Promise.prototype.catch](http://www.ecma-international.org/ecma-262/6.0/#sec-promise.prototype.catch)
 - [x] [Promise.prototype.then](http://www.ecma-international.org/ecma-262/6.0/#sec-promise.prototype.then)
 - [x] [Promise.all](http://www.ecma-international.org/ecma-262/6.0/#sec-promise.all-resolve-element-functions)
-- [ ] [Promise.race](http://www.ecma-international.org/ecma-262/6.0/#sec-promise.race)
+- [x] [Promise.race](http://www.ecma-international.org/ecma-262/6.0/#sec-promise.race)
 - [x] [Promise.reject](http://www.ecma-international.org/ecma-262/6.0/#sec-promise.reject)
 - [x] [Promise.resolve](http://www.ecma-international.org/ecma-262/6.0/#sec-promise.resolve)
 
