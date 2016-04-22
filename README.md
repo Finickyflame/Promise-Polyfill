@@ -4,6 +4,8 @@
 Add the functionalities to support Promises in older browsers.
 The implementation is purely based on the [ECMA's specifications](http://www.ecma-international.org/ecma-262/6.0/#sec-promise-constructor).
 
+For more informations on how to use the Promise object, see [Mozzila's Promise reference](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise)
+
 ## How to use
 
 ### Browser
