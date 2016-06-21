@@ -1,10 +1,12 @@
 ﻿<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
 <head>
     <meta charset="utf-8" />
     <title>Promise - Unit Testing - Promise.all</title>
     <link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-1.23.1.css">
 </head>
+
 <body>
     <div id="qunit"></div>
     <div id="qunit-fixture"></div>
@@ -77,6 +79,37 @@
                 done();
             });
         });
+        QUnit.test("Resolve - Complex", function (assert) {
+            var done = assert.async();
+            
+            var itererable = [
+                new PromisePolyfill(function (resolve, reject) {
+                    resolve(1);
+                }),
+                new PromisePolyfill(function (resolve, reject) {
+                    resolve(2);
+                })
+            ];
+
+            var promise = new PromisePolyfill(function (resolve, reject) {
+                    resolve([]);
+                })
+                .then(PromisePolyfill.all([]))
+                .then(function(emptyList){
+                    return PromisePolyfill.all(emptyList);
+                })
+                .then(function(){
+                    return PromisePolyfill.all(itererable)
+                });
+            promise.then(function(a) {
+                assert.equal(promise._promiseState, "fulfilled");
+                assert.deepEqual(promise._promiseResult, [1, 2]);
+                assert.deepEqual(a, [1, 2]);
+                done();
+            });
+            return promise;
+        });
     </script>
 </body>
+
 </html>

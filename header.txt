@@ -1,0 +1,6 @@
+/**
+ * <%= pkg.name %>
+ * Version: <%= pkg.version %>
+ * (c) <%= pkg.author %> - <%= pkg.homepage %>
+ * License: <%= pkg.license %>
+ */
