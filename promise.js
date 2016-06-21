@@ -330,7 +330,6 @@
                 for (var i = 0; i < length; i++) {
                     var handler = new this._handlers[i]();
                     if (handler.isSupported()) {
-                        console.log("using jobhandler " + i);
                         return handler;
                     }
                 }
@@ -671,7 +670,7 @@
         function promiseResolveThenableJob(promiseToResolve, thenable, then) {
             var resolvingFunctions = createResolvingFunctions(promiseToResolve);
             try {
-                var thenCallResult = then.call(thenable, [resolvingFunctions._resolve, resolvingFunctions._reject]);
+                var thenCallResult = then.call(thenable, resolvingFunctions._resolve, resolvingFunctions._reject);
             } catch (ex) {
                 var status = resolvingFunctions._reject.call(undefined, thenCallResult);
             }

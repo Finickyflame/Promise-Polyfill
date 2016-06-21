@@ -1,6 +1,6 @@
 {
   "name": "Promise-Polyfill",
-  "version": "0.0.2",
+  "version": "1.0.1",
   "description": "Add the functionalities to support Promises in older browsers.",
   "main": "dist/promise.js",
   "files": [
@@ -37,6 +37,7 @@
     "gulp-rename": "^1.2.2",
     "gulp-replace": "^0.5.4",
     "gulp-uglify": "^1.4.2",
+    "gulp-header": "^1.8.3",
     "mocha": "^2.3.3",
     "mocha-lcov-reporter": "^1.0.0"
   },
